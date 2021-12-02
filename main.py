@@ -1,8 +1,15 @@
 import serial
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
+import subprocess as sp 
+#interval es el valor de la psoc de delay/4
 
+def searchPorts():
+    ports = sp.check_output(['py', '-m', 'serial.tools.list_ports'])
+    ports = ports.decode('utf-8')
+    ports = ports.strip()
+    return ports
 
 def bytesToString(listOfBytes):
     return float(''.join([k.decode('utf-8') for k in listOfBytes]))
@@ -13,8 +20,7 @@ def init():
     return line,
 
 
-def animate(frame): 
-
+def animate(frame):
     data = []
     for i in range(4):
         some = ser.read()
@@ -28,14 +34,13 @@ def animate(frame):
     return line,
 
 def run():
-
     ani = FuncAnimation(
         fig, animate, init_func=init, interval=5, blit=True, save_count=10)
     plt.show()
 
 if __name__ == "__main__":
-
-    ser = serial.Serial("COM3", 115200)
+    #ser = serial.Serial("COM3", 115200)
+    ser = serial.Serial(searchPorts(), 115200)
     fig, ax = plt.subplots()
     max_x = 100
     max_rand = 1.2
@@ -43,11 +48,10 @@ if __name__ == "__main__":
     x = np.arange(0, max_x)
     subx = np.arange(0, max_x)
     ax.set_ylim(min_rand, max_rand)
-    line, = ax.plot(x, subx)
+    line, = ax.plot(x, subx)#Los parametros son dos listas con el mismo tamaño. representa el eje x
     imagen = [np.nan] * len(x)
 
 
-    #py -m serial.tools.listports
     ser.write(b'2')
     run()
     ser.write(b'1')
