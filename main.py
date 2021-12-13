@@ -15,44 +15,53 @@ def bytesToString(listOfBytes):
     return float(''.join([k.decode('utf-8') for k in listOfBytes]))
 
 
-def init():
-    line.set_ydata( imagen )
-    return line,
+
+class Iserial:
+    def __init__(self, port, bauding):
+        self._ser = serial.Serial(port, bauding)
+
+        self.initConfigurations(100,1.2,0)
+
+    def initConfigurations(self, max_x, max_rand, min_rand):
+        self._fig, ax = plt.subplots()
+        x = np.arange(0, max_x)
+        subx = np.arange(0, max_x)
+        ax.set_ylim(min_rand, max_rand)
+        self._line, = ax.plot(x, subx)
+        self._imagen = [np.nan] * len(x)
+#        print(self._line)
+#        print(type(self._line))
+
+    def writeByte(self, byte:bytes):
+        self._ser.write( byte )
+
+    def run(self):
+        self.writeByte(b'2')
+        ani = FuncAnimation( self._fig, self.animate, init_func=self.first, interval=5, blit=True, save_count=10)
+        plt.show()
+        self.writeByte(b'1')
+        plt.close()
+
+    def animate(self, frame):
+        data = []
+        for i in range(4):
+            some = self._ser.read()
+            data.append( some )
+        print( bytesToString(data) )
+        self._imagen.append( bytesToString(data) )
+        self._imagen.pop(0)   
+        
+        self._line.set_ydata(self._imagen)
+
+        return (self._line,)
+
+    def first(self):
+        self._line.set_ydata( self._imagen )
+        return (self._line,)
 
 
-def animate(frame):
-    data = []
-    for i in range(4):
-        some = ser.read()
-        data.append( some )
-    print( bytesToString(data) )
-    imagen.append( bytesToString(data) )
-    imagen.pop(0)   
-    
-    line.set_ydata(imagen)
-
-    return line,
-
-def run():
-    ani = FuncAnimation(
-        fig, animate, init_func=init, interval=5, blit=True, save_count=10)
-    plt.show()
 
 if __name__ == "__main__":
-    #ser = serial.Serial("COM3", 115200)
-    ser = serial.Serial(searchPorts(), 115200)
-    fig, ax = plt.subplots()
-    max_x = 100
-    max_rand = 1.2
-    min_rand = 0
-    x = np.arange(0, max_x)
-    subx = np.arange(0, max_x)
-    ax.set_ylim(min_rand, max_rand)
-    line, = ax.plot(x, subx)#Los parametros son dos listas con el mismo tamaño. representa el eje x
-    imagen = [np.nan] * len(x)
 
-
-    ser.write(b'2')
-    run()
-    ser.write(b'1')
-    ser.close()
+    myser = Iserial(searchPorts(), 115200)
+    myser.run()
