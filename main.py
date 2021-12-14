@@ -3,7 +3,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 import subprocess as sp 
+from os import system
 #interval es el valor de la psoc de delay/4
+
 
 def searchPorts():
     ports = sp.check_output(['py', '-m', 'serial.tools.list_ports'])
@@ -13,7 +15,6 @@ def searchPorts():
 
 def bytesToString(listOfBytes):
     return float(''.join([k.decode('utf-8') for k in listOfBytes]))
-
 
 
 class Iserial:
@@ -29,8 +30,6 @@ class Iserial:
         ax.set_ylim(min_rand, max_rand)
         self._line, = ax.plot(x, subx)
         self._imagen = [np.nan] * len(x)
-#        print(self._line)
-#        print(type(self._line))
 
     def writeByte(self, byte:bytes):
         self._ser.write( byte )
@@ -60,8 +59,44 @@ class Iserial:
         return (self._line,)
 
 
+def run():
+
+    try:
+        myser = Iserial(searchPorts(), 115200)
+        hasSerial = True
+    except:
+        hasSerial = False
+
+    while True:
+        try:
+            system('cls')#Solo windows
+        except:
+            pass
+
+        print(f'''\t\tIserial\n\n
+    Los puertos seriales actuales son:
+    {hasSerial}
+    {searchPorts()}
+
+    [I]nit. solo si existe puerto serial.
+    [L]eer
+    [E]scribir
+    [S]alir
+            ''')
+        opc = str(input('Ingresar opc: ')).upper()
+        if opc == 'I' and hasSerial == False:
+            myser = Iserial(searchPorts(), 115200)
+            hasSerial = True
+        elif opc == 'L' and hasSerial:  
+            myser.run()
+        elif opc == 'E' and hasSerial:
+            byte = bytes(str(input('Ingrese byte: ')), 'utf-8')
+            myser.writeByte(byte)
+        elif opc == 'S':
+            break
+        else:
+            print('Ha dijitado erroneamente')
+            print('O no se ha inicializado el serial')
 
 if __name__ == "__main__":
-
-    myser = Iserial(searchPorts(), 115200)
-    myser.run()
+    run()
